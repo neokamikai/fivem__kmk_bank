@@ -1,0 +1,68 @@
+* {
+  padding: 0;
+  margin: 0;
+}
+body {
+  background: transparent;
+}
+
+.btn-block {
+  display: block;
+  width: 100%;
+}
+
+.ui-atm {
+  width: 800px;
+  height: 600px;
+  background-color: rgba(192,192,192,0.5);
+  margin: auto;
+  position: absolute;
+  left: calc(50% - 400px);
+  top: calc(50% - 300px);
+  z-index: 50;
+  padding: 10px;
+  display: none;
+}
+.ui-atm.open {
+  display: unset;
+}
+
+.ui-atm > .card {
+  height: 100%;
+}
+label {
+  font-weight: bold;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;  
+}
+.grid-2x1 {
+  grid-template-columns: 1fr 1fr;
+}
+.grid-3x1 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.grid-4x1 {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.btn.btn-primary:hover, .btn.btn-primary.selected {
+  outline: 1px solid darkblue;
+}
+.btn.btn-secondary:hover, .btn.btn-secondary.selected {
+  outline: 1px solid darkgray;
+}
+.btn.btn-danger:hover, .btn.btn-danger.selected {
+  outline: 1px solid darkblue;
+}
+.t-r, .text-right {
+  text-align: right;
+}
+.t-c, .text-center {
+  text-align: center;
+}
+.t-l, .text-left {
+  text-align: left;
+}

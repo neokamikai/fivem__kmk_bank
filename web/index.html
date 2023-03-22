@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html ng-app="app">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.3/sweetalert2.min.css" integrity="sha512-NvuRGlPf6cHpxQqBGnPe7fPoACpyrjhlSNeXVUY7BZAj1nNhuNpRBq3osC4yr2vswUEuHq2HtCsY2vfLNCndYA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.8.2/angular.min.js" integrity="sha512-7oYXeK0OxTFxndh0erL8FsjGvrl2VMDor6fVqzlLGfwOQQqTbYsGPv4ZZ15QHfSk80doyaM0ZJdvkyDcVO7KFA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/11.7.3/sweetalert2.all.min.js" integrity="sha512-/iBgV43zPirSC0tue+PT/1VHGs7En24twBmT+sVMgn9PTaOpKfbgIyL5YsGKlbAIxcwz9S8W/YEnYjpIYj2Axw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/angularjs/locales/angular-locale_pt-br.js"></script>
+  <script src="script.js"></script>
+</head>
+
+<body ng-controller="MainController as $ctrl">
+  <div class="ui-money">
+
+  </div>
+  <div class="ui-atm" ng-class="{ open: !!$ctrl.atm.open }">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">
+          Caixa Eletrônico
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-6">
+            <label>Titular da Conta: </label>
+            <span>{{ $ctrl.atm.accountInfo.owner.name }}</span>
+          </div>
+          <div class="col-6" style="text-align: right">
+            <label for="">Saldo atual: </label>
+            <span>R$ {{ $ctrl.atm.accountInfo.balance | number : 2 }}</span>
+          </div>
+        </div>
+        <div class="row">
+          <hr>
+        </div>
+        <div class="row" ng-if="!$ctrl.atm.getCurrentWindow()">
+          <div class="col-4"><button class="btn btn-block btn-primary m-1" ng-click="$ctrl.atm.goWithdraw()">Saque</button></div>
+          <div class="col-4"><button class="btn btn-block btn-primary m-1" ng-click="$ctrl.atm.goDeposit()">Depósito</button></div>
+          <div class="col-4"><button class="btn btn-block btn-primary m-1" ng-click="$ctrl.atm.goTransfer()">Transferência</button></div>
+        </div>
+        <div class="row" ng-if="$ctrl.atm.isCurrentWindow('withdraw')">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">Saque</div>
+              <div class="card-body">
+                <div class="form-group" ng-if="$ctrl.atm.withdraw.isCurrentWindow('select')">
+                  <div class="grid grid-4x1">
+                    <div ng-repeat="amount in $ctrl.atm.withdraw.availableAmounts"><button ng-disabled="amount > $ctrl.atm.accountInfo.balance" class="btn btn-block btn-success" ng-click="$ctrl.atm.withdraw.requestConfirm(amount)">R$ {{ amount | number : 0}}</button></div>
+                    <div><button class="btn btn-block btn-warning" ng-disabled="$ctrl.atm.accountInfo.balance <= 0" ng-click="$ctrl.atm.withdraw.goTo('other-amount')">Outro valor</button></div>
+                  </div>
+                </div>
+                <div class="form-group" ng-if="$ctrl.atm.withdraw.isCurrentWindow('other-amount')">
+                  <div class="card">
+                    <div class="card-header">Outro Valor</div>
+                    <div class="card-body">
+                      <div class="row">
+                        <div class="col-3">
+                          <div class="form-group">
+                            <label for="">Informe o valor desejado</label>
+                            <div class="input-group">
+                              <span class="input-group-text">R$</span>
+                              <input autoComplete="off" type="number" class="form-control" ng-model="$ctrl.atm.withdraw.inputAmount">
+                            </div>
+                            <div class="form-control" style="text-align: right;">R$ {{ ($ctrl.atm.withdraw.inputAmount||0) | number: 2 }}</div>
+                            <button class="btn btn-secondary btn-sm btn-block" ng-click="$ctrl.atm.withdraw.inputAmount = ''">Limpar</button>
+                          </div>
+                        </div>
+                        <div class="col-9">
+                          <div class="card">
+                            <div class="card-body">
+                              <div class="grid grid-3x1">
+                                <div ng-repeat="amount in $ctrl.atm.withdraw.availableAddAmounts">
+                                  <div class="input-group" style="width: 100%">
+                                    <button class="btn btn-sm btn-danger" style="width: 30px" ng-click="$ctrl.atm.withdraw.addToInput(-amount)">-</button>
+                                    <div class="form-control">R$ {{ amount | simplenumber }}</div>
+                                    <button class="btn btn-sm btn-success" style="width: 30px" ng-click="$ctrl.atm.withdraw.addToInput(amount)">+</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="card-footer">
+                      <button class="btn btn-secondary" ng-click="$ctrl.atm.withdraw.goBack()">Voltar</button>
+                      <div class="btn btn-primary" ng-disabled="!($ctrl.atm.withdraw.inputAmount > 0 && $ctrl.atm.withdraw.inputAmount <= $ctrl.atm.accountInfo.balance)" ng-click="$ctrl.atm.withdraw.requestConfirm($ctrl.atm.withdraw.inputAmount)">Confirmar</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group" ng-if="$ctrl.atm.withdraw.isCurrentWindow('confirm')">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="form-group">
+                        Deseja continuar?
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Saldo atual</span>
+                          <div class="form-control">R$ {{ $ctrl.atm.accountInfo.balance | number: 2 }}</div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Valor à retirar</span>
+                          <div class="form-control text-danger">R$ -{{ $ctrl.atm.withdraw.amount | number: 2 }}</div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Saldo final</span>
+                          <div class="form-control">R$ {{ $ctrl.atm.accountInfo.balance - $ctrl.atm.withdraw.amount | number: 2 }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="grid grid-2x1">
+                      <button class="btn btn-success">Sim</button>
+                      <div class="btn btn-danger" ng-click="$ctrl.atm.withdraw.goBack()">Não</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-secondary" ng-click="$ctrl.atm.goBack()">Voltar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" ng-if="$ctrl.atm.isCurrentWindow('deposit')">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">Depósito</div>
+              <div class="card-body">
+                <div class="form-group" ng-if="$ctrl.atm.deposit.isCurrentWindow('fill')">
+                  <div class="row">
+                    <div class="col-3">
+                      <div class="form-group">
+                        <label for="">Informe o valor desejado</label>
+                        <div class="input-group">
+                          <span class="input-group-text">R$</span>
+                          <input autoComplete="off" type="number" class="form-control" ng-model="$ctrl.atm.deposit.inputAmount">
+                        </div>
+                        <div class="form-control" style="text-align: right;">R$ {{ ($ctrl.atm.deposit.inputAmount||0) | number: 2 }}</div>
+                        <button class="btn btn-secondary btn-sm btn-block" ng-click="$ctrl.atm.deposit.inputAmount = ''">Limpar</button>
+                      </div>
+                    </div>
+                    <div class="col-9">
+                      <div class="card">
+                        <div class="card-body">
+                          <div class="grid grid-3x1">
+                            <div ng-repeat="amount in $ctrl.atm.deposit.availableAddAmounts">
+                              <div class="input-group" style="width: 100%">
+                                <button class="btn btn-sm btn-danger" style="width: 30px" ng-click="$ctrl.atm.deposit.addToInput(-amount)">-</button>
+                                <div class="form-control">R$ {{ amount | simplenumber }}</div>
+                                <button class="btn btn-sm btn-success" style="width: 30px" ng-click="$ctrl.atm.deposit.addToInput(amount)">+</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="form-group" ng-if="$ctrl.atm.deposit.isCurrentWindow('confirm')">
+                  <div class="row">
+                    <div class="col-12">
+                      <div class="form-group">
+                        Deseja continuar?
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Saldo atual</span>
+                          <div class="form-control t-r">R$ {{ $ctrl.atm.accountInfo.balance | number: 2 }}</div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Valor à retirar</span>
+                          <div class="form-control text-success t-r">R$ -{{ $ctrl.atm.deposit.amount | number: 2 }}</div>
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <div class="input-group">
+                          <span class="input-group-text" style="width: 8em">Saldo final</span>
+                          <div class="form-control text-success t-r">R$ {{ $ctrl.atm.accountInfo.balance + $ctrl.atm.deposit.amount | number: 2 }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="grid grid-2x1">
+                      <button class="btn btn-success">Sim</button>
+                      <div class="btn btn-danger" ng-click="$ctrl.atm.deposit.goBack()">Não</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-secondary" ng-click="$ctrl.atm.goBack()">Voltar</button>
+                <div class="btn btn-primary" ng-if="$ctrl.atm.deposit.isCurrentWindow('fill')" ng-disabled="!($ctrl.atm.deposit.inputAmount > 0 && $ctrl.atm.deposit.inputAmount <= $ctrl.atm.accountInfo.balance)" ng-click="$ctrl.atm.deposit.requestConfirm()">Confirmar</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row" ng-if="$ctrl.atm.isCurrentWindow('transfer')">
+          <div class="col-12" style="max-height: 770px">
+            <div class="card">
+              <div class="card-header">Transferência</div>
+              <div class="card-body">
+                <div style="overflow-y: auto; overflow-x: hidden; max-height: 275px;">
+                  <div ng-if="$ctrl.atm.transfer.isCurrentWindow('fill')">
+                    <div>
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="form-group">
+                            <label for="">Destinatário</label>
+                            <div class="input-group" ng-if="$ctrl.atm.transfer.target != 'new'">
+                              <select class="form-control" ng-model="$ctrl.atm.transfer.target">
+                                <option value="">(Selecione)</option>
+                                <option value="{{ target.id }}" ng-repeat="target in $ctrl.atm.transfer.knownTargets">[{{ target.type }}] {{ target.name }}</option>
+                              </select>
+                              <button class="btn btn-outline-secondary" ng-click="$ctrl.atm.transfer.target = 'new';">Novo</button>
+                            </div>
+                            <div class="card" ng-if="$ctrl.atm.transfer.target == 'new'">
+                              <div class="card-body">
+                                <div class="row">
+                                  <div class="col-12">
+                                    <div class="form-group">
+                                      <label for="">Tipo</label>
+                                      <select ng-model="$ctrl.atm.transfer.newTarget.type" class="form-control">
+                                        <option value="">(Selecione)</option>
+                                        <option value="citizen">Cidadão</option>
+                                        <option value="society">Empresa/Sociedade</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div class="col-6" ng-if="$ctrl.atm.transfer.newTarget.type == 'citizen'">
+                                    <div class="form-group">
+                                      <label for="">ID</label>
+                                      <input autoComplete="off" type="text" ng-model="$ctrl.atm.transfer.newTarget.citizenId" class="form-control">
+                                    </div>
+                                  </div>
+                                  <div class="col-6" ng-if="$ctrl.atm.transfer.newTarget.type == 'citizen'">
+                                    <div class="form-group">
+                                      <label for="">Nome</label>
+                                      <input autoComplete="off" type="text" ng-model="$ctrl.atm.transfer.newTarget.name" class="form-control">
+                                    </div>
+                                  </div>
+                                  <div class="col-12" ng-if="$ctrl.atm.transfer.newTarget.type == 'society'">
+                                    <div class="form-group">
+                                      <label for="">Empresa/Sociedade</label>
+                                      <select ng-model="$ctrl.atm.transfer.newTarget.societyId" class="form-control">
+                                        <option value="">(Selecione)</option>
+                                        <option value="{{ society.id }}" ng-repeat="society in $ctrl.atm.transfer.societies">{{ society.name }}</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="card-footer">
+                                <button class="btn btn-danger" ng-click="$ctrl.atm.transfer.target = ''">Cancelar</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div style="height: 1em;"></div>
+                    <div class="row">
+                      <div class="col-3">
+                        <div class="form-group">
+                          <label for="">Informe o valor desejado</label>
+                          <div class="input-group">
+                            <span class="input-group-text">R$</span>
+                            <input autoComplete="off" type="number" class="form-control" ng-model="$ctrl.atm.deposit.inputAmount">
+                          </div>
+                          <div class="form-control" style="text-align: right;">R$ {{ ($ctrl.atm.deposit.inputAmount||0) | number: 2 }}</div>
+                          <button class="btn btn-secondary btn-sm btn-block" ng-click="$ctrl.atm.transfer.inputAmount = ''">Limpar</button>
+                        </div>
+                      </div>
+                      <div class="col-9">
+                        <div class="card">
+                          <div class="card-body">
+                            <div class="grid grid-3x1">
+                              <div ng-repeat="amount in $ctrl.atm.transfer.availableAddAmounts">
+                                <div class="input-group" style="width: 100%">
+                                  <button class="btn btn-sm btn-danger" style="width: 30px" ng-click="$ctrl.atm.transfer.addToInput(-amount)">-</button>
+                                  <div class="form-control">R$ {{ amount | simplenumber }}</div>
+                                  <button class="btn btn-sm btn-success" style="width: 30px" ng-click="$ctrl.atm.transfer.addToInput(amount)">+</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button class="btn btn-secondary" ng-click="$ctrl.atm.goBack()">Voltar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-secondary">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <img src="..." class="rounded me-2" alt="...">
+      <strong class="me-auto">Bootstrap</strong>
+      <small>11 mins ago</small>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body">
+      Hello, world! This is a toast message.
+    </div>
+  </div>
+</body>
+
+</html>
