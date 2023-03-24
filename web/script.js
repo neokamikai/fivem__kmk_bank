@@ -94,19 +94,22 @@ app.controller('MainController', ['$scope', function MainController(scope) {
       ctrl.atm.accountInfo.balance = data.accountInfo.balance;
       ctrl.atm.show();
     },
+    'atmDebugInfo': (data) => {
+      ctrl.atm.debug = data
+    },
   };
   window.addEventListener('message', (event) => {
     let data = event.data;
     if (typeof data === 'string') {
       data = JSON.parse(data);
     }
-    const handler = eventHandlers[event.data.type];
+    const handler = eventHandlers[data.type];
     if (typeof handler == 'function') {
-      handler(event.data);
+      handler(data);
       scope.$apply();
     }
     else {
-      console.warn('no handler defined for [',event.data.type,']')
+      console.warn('no handler defined for [',data.type,']', event.data)
     }
   });
 

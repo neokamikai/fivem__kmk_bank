@@ -23,6 +23,12 @@ body {
   padding: 10px;
   display: none;
 }
+.ui-atm-debug {
+  width: 400px;
+  position: absolute;
+  right: 0;
+  top: calc(50% - 90px);
+}
 .ui-atm.open {
   display: unset;
 }
