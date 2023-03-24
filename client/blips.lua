@@ -14,9 +14,9 @@ else
 end
 local blips = { -- Example {title="", colour=, id=, x=, y=, z=},
   {
-    title = "Caixa Eletrônico",
+    title = "Caixa Eletrônico", -- Loja
     colour = 25,
-    id = 207, -- 33.0, -1348.0, 29.5
+    id = 207, 
     x = 33.435,
     y = -1347.314,
     z = 29.500,
@@ -29,7 +29,43 @@ local blips = { -- Example {title="", colour=, id=, x=, y=, z=},
       bopUpAndDown = true,
       color = {r=0,g=170,b=0,a=192}
     },
-  } }
+  },
+  {
+    title = "Caixa Eletrônico", -- Rua
+    colour = 25,
+    id = 207,
+    x = -721.168,
+    y = -415.567,
+    z = 34.0,
+    interactVec = { distance = 0.8, heading = 267, headingDelta = 15 },
+    marker = {
+      x = -720.768,
+      y = -415.567,
+      z = 36.35,
+      scale = 0.5,
+      bopUpAndDown = true,
+      color = {r=0,g=170,b=0,a=192}
+    },
+  },
+  {
+    title = "Caixa Eletrônico", -- Loja
+    colour = 25,
+    id = 207,
+    x = -717.347,
+    y = -915.647,
+    z = 19.216,
+    interactVec = { distance = 1.6, heading = 92, headingDelta = 7.8 },
+    marker = {
+      x = -718.247,
+      y = -915.647,
+      z = 20.216,
+      scale = 0.75,
+      bopUpAndDown = true,
+      color = { r = 0, g = 170, b = 0, a = 192 }
+    },
+  },
+}
+ 
 
 local function DisplayInteractionText(msg, coords)
   AddTextEntry('kmkBankFloatingHelpNotification', msg)
@@ -39,6 +75,8 @@ local function DisplayInteractionText(msg, coords)
   EndTextCommandDisplayHelp(2, false, false, -1)
   
 end
+
+
 
 Citizen.CreateThread(function()
   for _, info in pairs(blips) do
@@ -53,14 +91,28 @@ Citizen.CreateThread(function()
     EndTextCommandSetBlipName(info.blip)
   end
   Citizen.CreateThread(function()
+    while not ESX.IsPlayerLoaded() do
+      Citizen.Wait(1000)
+    end
+    local debugUIWasVisible = Config.debug.uiVisible
     while true do
       Citizen.Wait(0)
+      ESX.GetPlayerData()
+      local xPlayer = ESX.GetPlayerData()
       local canInteract = false
       local year --[[ integer ]], month --[[ integer ]], day --[[ integer ]], hour --[[ integer ]], minute --[[ integer ]], second --[[ integer ]] =
           GetLocalTime()
-      local xPlayer = ESX.GetPlayerData()
-      local playerCoords = xPlayer.coords
       local playerHeading = GetEntityHeading(xPlayer.ped)
+      local playerCoords = GetEntityCoords(xPlayer.ped, false)
+      local debugInfo = {
+        blipIndex = -1,
+        blipInfo = {},
+        distance = 0,
+        headingDelta = 0,
+        isFacingATM = false,
+        isCloseForInteraction = false,
+        canInteract = false,
+      }
       for atmId, info in pairs(blips) do
         local marker = info.marker
         DrawMarker(
@@ -73,18 +125,47 @@ Citizen.CreateThread(function()
           marker.bopUpAndDown, true, 2, false, nil, nil, false
         )
         local distance = GetDistanceBetweenCoords(playerCoords.x, playerCoords.y, playerCoords.z, info.x, info.y, info.z,
-        true)
-        local headingDelta = info.interactVec.heading - playerHeading
-        if (distance < info.interactVec.distance and math.abs(headingDelta) < info.interactVec.headingDelta) then
+          true)
+        local headingDelta = math.abs(info.interactVec.heading - playerHeading)
+        local isFacingATM = headingDelta < info.interactVec.headingDelta
+        local isCloseForInteraction = distance < info.interactVec.distance
+        if (isCloseForInteraction and isFacingATM) then
           DisplayInteractionText(_U('interactKeyMapMsg', Config.InteractKeyMap.keyboard.text), info.marker)
           canInteract = true
         end
         ATM.canInteract = canInteract
-        if(ATM.canInteract)then
+        if (ATM.canInteract) then
           ATM.id = atmId
         else
-          ATM.id = -1          
+          ATM.id = -1
         end
+        if (Config.debug.uiVisible) then
+          if (debugInfo.blipIndex == -1 or distance <= debugInfo.distance) then
+            debugInfo.blipIndex = atmId
+            debugInfo.distance = distance
+            debugInfo.blipInfo = info
+            debugInfo.headingDelta = headingDelta
+            debugInfo.isFacingATM = isFacingATM
+            debugInfo.isCloseForInteraction = isCloseForInteraction
+            debugInfo.canInteract = canInteract
+          end
+        end
+        debugUIWasVisible = Config.debug.uiVisible
+      end
+      if (Config.debug.uiVisible) then
+        SendNUIMessage(json.encode({
+          type = 'atmDebugInfo',
+          uiVisible = true,
+          distance = debugInfo.distance,
+          headingDelta = debugInfo.headingDelta,
+          isFacingATM = debugInfo.isFacingATM,
+          isCloseForInteraction = debugInfo.canInteract,
+          closestATM = debugInfo.blipIndex,
+          blipInfo = debugInfo.blipInfo,
+          playerHeading = playerHeading,
+        }))
+      elseif (debugUIWasVisible) then
+        SendNUIMessage(json.encode({ type = 'atmDebugInfo', uiVisible = false }))
       end
     end
   end)
