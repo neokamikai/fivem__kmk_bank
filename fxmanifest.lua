@@ -5,15 +5,25 @@ author 'Kamikai <kamikai@gmail.com>'
 description 'Example resource'
 version '0.0.1'
 
-shared_scripts { 'shared/**' }
+shared_scripts {
+  '@es_extended/imports.lua', '@es_extended/locale.lua',
+  'shared/**.lua'
+}
+
 client_scripts { 
-  '@esx_exntended/imports.lua',
   'client/**.lua',
 }
 server_scripts {
+	'@oxmysql/lib/MySQL.lua',
+	'@esx_society/server/main.lua',
   'server/**.lua',
 }
 
-url_page 'web/index.html'
 
-export 'SayHello'
+files {
+  'web/**.*'
+}
+
+ui_page 'web/index.html'
+
+dependency 'es_extended'

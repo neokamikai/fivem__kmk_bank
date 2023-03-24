@@ -90,10 +90,9 @@ app.controller('MainController', ['$scope', function MainController(scope) {
       ctrl.atm.accountInfo.balance = data.balance;
     },
     'openATM': (data) => {
-      ctrl.atm.accountInfo.owner = data.owner;
-      ctrl.atm.accountInfo.balance = data.balance;
+      ctrl.atm.accountInfo.owner = data.accountInfo.owner;
+      ctrl.atm.accountInfo.balance = data.accountInfo.balance;
       ctrl.atm.show();
-
     },
   };
   window.addEventListener('message', (event) => {
@@ -101,7 +100,14 @@ app.controller('MainController', ['$scope', function MainController(scope) {
     if (typeof data === 'string') {
       data = JSON.parse(data);
     }
-    console.log('received message:', event.data);
+    const handler = eventHandlers[event.data.type];
+    if (typeof handler == 'function') {
+      handler(event.data);
+      scope.$apply();
+    }
+    else {
+      console.warn('no handler defined for [',event.data.type,']')
+    }
   });
 
   const makeWindowStack = () => ({
@@ -138,12 +144,13 @@ app.controller('MainController', ['$scope', function MainController(scope) {
     },
   });
   const availableAddAmounts = [1, 10, 50, 100, 500, 1000, 10000, 100000, 1000000];
+  console.log(location, ctrl)
   ctrl.atm = {
-    open: true,
+    closed: true,
     ...makeWindowStack(),
     show(data = {}) {
       this.goTo('');
-      this.open = true;
+      this.closed = false;
       ctrl.atm.accessTimer = setTimeout(() => {
 
       }, data.timeout || 60000);
@@ -151,8 +158,9 @@ app.controller('MainController', ['$scope', function MainController(scope) {
     close() {
       clearTimeout(ctrl.atm.accessTimer);
       delete ctrl.atm.accessTimer;
-      this.open = false;
+      this.closed = true;
       ctrl.post('atmHasClosed', {});
+      scope.$apply();
     },
     goWithdraw() {
       this.withdraw.goSelect();
@@ -314,5 +322,4 @@ app.controller('MainController', ['$scope', function MainController(scope) {
       balance: 0,
     }
   };
-  ctrl.atm.show();
 }]);
