@@ -32,6 +32,10 @@
           <span class="input-group-text"><label for="">Distance to Closest ATM:</label></span>
           <div class="form-control">{{$ctrl.atm.debug.distance}}</div>
         </div>
+        <div class="input-group">
+          <span class="input-group-text"><label for="">blipINfo:</label></span>
+          <div class="form-control">{{$ctrl.atm.debug.blipInfo}}</div>
+        </div>
       </div>
     </div>
     <div class="ui-atm" ng-class="{ open: !$ctrl.atm.closed }">
@@ -146,7 +150,7 @@
                         </div>
                       </div>
                       <div class="grid grid-2x1">
-                        <button class="btn btn-success">Sim</button>
+                        <button class="btn btn-success" ng-click="$ctrl.atm.withdraw.confirm()">Sim</button>
                         <div class="btn btn-danger" ng-click="$ctrl.atm.withdraw.goBack()">Não</div>
                       </div>
                     </div>
@@ -219,7 +223,7 @@
                         </div>
                       </div>
                       <div class="grid grid-2x1">
-                        <button class="btn btn-success">Sim</button>
+                        <button class="btn btn-success" ng-click="$ctrl.atm.deposit.confirm()">Sim</button>
                         <div class="btn btn-danger" ng-click="$ctrl.atm.deposit.goBack()">Não</div>
                       </div>
                     </div>

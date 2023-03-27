@@ -2,6 +2,12 @@ ATM = {
   canInteract = false,
   id = -1
 }
+local ATMHashes = {
+  prop_atm_01 = { sint = -870868698, usint = 3424098598 },
+  prop_atm_02 = { sint = -1126237515, usint = 3168729781 },
+  prop_atm_03 = { sint = -1364697528, usint = 2930269768 },
+  prop_fleeca_atm = { sint = 506770882, usint = 506770882 }
+}
 if(Config)then
   print ('Config available')
   if (Config.InteractKeyMap) then
@@ -21,6 +27,7 @@ local blips = { -- Example {title="", colour=, id=, x=, y=, z=},
     y = -1347.314,
     z = 29.500,
     interactVec = { distance = 0.8, heading = 185, headingDelta = 7.8 },
+    modelHash = -870868698,
     marker = {
       x = 33.2,
       y = -1348.85,
@@ -67,6 +74,12 @@ local blips = { -- Example {title="", colour=, id=, x=, y=, z=},
 }
  
 
+local function isAtmModel(hash)
+  return hash == ATMHashes.prop_atm_01.sint or hash == ATMHashes.prop_atm_01.sint or
+      hash == ATMHashes.prop_atm_02.sint or hash == ATMHashes.prop_atm_02.sint or
+      hash == ATMHashes.prop_atm_03.sint or hash == ATMHashes.prop_atm_03.sint or
+      hash == ATMHashes.prop_fleeca_atm.sint or hash == ATMHashes.prop_fleeca_atm.sint
+end
 local function DisplayInteractionText(msg, coords)
   AddTextEntry('kmkBankFloatingHelpNotification', msg)
   SetFloatingHelpTextWorldPosition(1, coords.x, coords.y, coords.z - 0.6)
@@ -95,6 +108,7 @@ Citizen.CreateThread(function()
       Citizen.Wait(1000)
     end
     local debugUIWasVisible = Config.debug.uiVisible
+    local shapeTestResult = 2
     while true do
       Citizen.Wait(0)
       ESX.GetPlayerData()
@@ -104,6 +118,7 @@ Citizen.CreateThread(function()
           GetLocalTime()
       local playerHeading = GetEntityHeading(xPlayer.ped)
       local playerCoords = GetEntityCoords(xPlayer.ped, false)
+      local shapeTestHandle = -1
       local debugInfo = {
         blipIndex = -1,
         blipInfo = {},
@@ -112,6 +127,13 @@ Citizen.CreateThread(function()
         isFacingATM = false,
         isCloseForInteraction = false,
         canInteract = false,
+        shapeTestResult = {
+          hit = false,
+          endCoords = { x = 0, y = 0, z = 0 },
+          surfaceNormal = { x = 0, y = 0, z = 0 },
+          entityHit = 0,
+          model = nil
+        }
       }
       for atmId, info in pairs(blips) do
         local marker = info.marker
@@ -129,6 +151,17 @@ Citizen.CreateThread(function()
         local headingDelta = math.abs(info.interactVec.heading - playerHeading)
         local isFacingATM = headingDelta < info.interactVec.headingDelta
         local isCloseForInteraction = distance < info.interactVec.distance
+        if ((not info.shapeTestResult == 1 or not info.shapeTestHandle) and isCloseForInteraction) then
+          info.shapeTestHandle = StartShapeTestLosProbe(playerCoords.x, playerCoords.y, playerCoords.z,
+            marker.x, marker.y,
+            playerCoords.z, 16, 0, 7)
+        end
+        info.shapeTestResult, info.shapeTestHit, info.shapeTestEndCoords, info.shapeTestSurfaceNormal, info.shapeTestEntityHit =
+            GetShapeTestResult(info.shapeTestHandle)
+        if (info.shapeTestResult == 2) then
+          info.shapeTestModel = GetEntityModel(info.shapeTestEntityHit)
+          print('atm %s shap test finished! Model: %s', atmId, info.shapeTestModel)
+        end
         if (isCloseForInteraction and isFacingATM) then
           DisplayInteractionText(_U('interactKeyMapMsg', Config.InteractKeyMap.keyboard.text), info.marker)
           canInteract = true
@@ -148,6 +181,15 @@ Citizen.CreateThread(function()
             debugInfo.isFacingATM = isFacingATM
             debugInfo.isCloseForInteraction = isCloseForInteraction
             debugInfo.canInteract = canInteract
+            if (info.shapeTestResult == 2 and isCloseForInteraction) then
+              -- print('shape test ok, model:', isAtmModel(GetEntityModel(info.shapeTestEntityHit)))
+              debugInfo.shapeTestResult.hit = info.shapeTestHit
+              debugInfo.shapeTestResult.endCoords = info.shapeTestEndCoords
+              debugInfo.shapeTestResult.surfaceNormal = info.shapeTestSurfaceNormal
+              debugInfo.shapeTestResult.entityHit = info.shapeTestEntityHit
+              debugInfo.shapeTestResult.model = GetEntityModel(info.shapeTestEntityHit)
+              --   print(json.encode(debugInfo.shapeTestResult))
+            end
           end
         end
         debugUIWasVisible = Config.debug.uiVisible

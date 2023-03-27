@@ -1,11 +1,44 @@
 if (ESX) then
   print('ESX is available at server!')
 end
-
+BankAccount = {}
+BankAccount.Player = {}
+BankAccount.Society = {}
 local transferTargets = {
 
 }
 
+function BankAccount.Player.canAfford(source, amount)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  local account = xPlayer.getAccount('bank')
+  return account.money >= amount
+end
+
+function BankAccount.Player.withdraw(source, amount)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  xPlayer.removeAccountMoney('bank', amount)
+  xPlayer.addMoney(amount)
+  return xPlayer.getAccount('bank').money
+end
+
+function BankAccount.Player.getBalance(source)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  return xPlayer.getAccount('bank').money
+end
+
+function BankAccount.Player.addAmount(source, amount)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  xPlayer.addMoney(amount)
+  return xPlayer.getAccount('bank').money
+end
+
+function BankAccount.Player.transferToPlayer(source, target, amount)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  local xPlayerTarget = ESX.GetPlayerFromId(target)
+  xPlayer.removeAccountMoney('bank', amount)
+  xPlayerTarget.addAccountMoney('bank', amount)
+  return xPlayer.getAccount('bank').money
+end
 -- Gets player job society money
 -- ESX.TriggerServerCallback('esx_society:getSocietyMoney', function(money)
 --
@@ -14,7 +47,11 @@ local transferTargets = {
 
 -- local xPlayer = ESX.GetPlayerFromId(source)
 -- xPlayer.getMoney()
-
+ESX.RegisterServerCallback('kmk_bank:withdrawMoney', function(source, cb, data)
+  local updatedBalance = BankAccount.Player.withdraw(source, data.amount)
+  -- print(string.format("%s is trying to withdraw %s from bank", xPlayer.getName(), data.amount))
+  cb({ error = nil, message = 'withdrawMoneySuccessful', balance = updatedBalance })
+end)
 ESX.RegisterServerCallback('kmk_bank:getTransferTargets', function(source, cb)
   if (transferTargets[source]) then
     cb(transferTargets[source])
@@ -86,3 +123,4 @@ RegisterNetEvent('kmk_bank:transferMoneyToTarget', transferMoneyToTarget)
 --RegisterNetEvent('kmk_bank:transferMoneyToTarget', getPlayerBalance)
 ESX.RegisterServerCallback('kmk_bank:getPlayerBalance', getPlayerBalance)
 -- ESX.RegisterServerCallback('kmk_bank:transferMoneyToTarget', transferMoneyToTarget)
+

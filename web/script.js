@@ -83,7 +83,16 @@ app.controller('MainController', ['$scope', function MainController(scope) {
       'Content-Type': 'application/json; charset=UTF-8',
     },
     body: JSON.stringify(data),
-  }).then(resp => resp.json());
+  }).then(resp => resp.json()).then(resp => {
+    let output = resp;
+    try {
+      if (typeof resp == 'string') output = JSON.parse(resp)
+    } catch (error) {
+      console.error(error)
+    }
+    if (resp.response) output = output.response
+    return output;
+  });
   const eventHandlers = {
     'accountBalanceUpdate': (data) => {
       if (ctrl.atm.accountInfo.accountId != data.accountId) return;
@@ -97,6 +106,10 @@ app.controller('MainController', ['$scope', function MainController(scope) {
     'atmDebugInfo': (data) => {
       ctrl.atm.debug = data
     },
+    'playerDied': () => {
+      Swal.close();
+      ctrl.atm.close();
+    }
   };
   window.addEventListener('message', (event) => {
     let data = event.data;
@@ -254,11 +267,14 @@ app.controller('MainController', ['$scope', function MainController(scope) {
         this.goTo('confirm');
       },
       confirm() {
-        ctrl.post('withdrawMoney').then((resp) => {
+        ctrl.post('withdrawMoney', { amount: this.amount }).then((resp) => {
           Swal.fire({
             icon: resp.error && 'error' || 'success',
             text: resp.message
           });
+          if (typeof resp.balance == 'number') {
+            ctrl.atm.accountInfo.balance = resp.balance;
+          }
           ctrl.atm.goBack();
           scope.$apply();
         })

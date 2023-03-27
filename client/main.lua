@@ -1,4 +1,7 @@
 Manage = {}
+exports('getSharedObject', function()
+  return Manage
+end)
 local Endpoint = {}
 -- web events:
 -- atmHasClosed: notifies client backend that user has closed the ATM interface
@@ -34,21 +37,25 @@ function Endpoint.getAssociationDetail(data, cb)
   cb(json.encode(response))
 end
 function Endpoint.withdrawMoney(data, cb)
-  local amount = data.amount
-  local xPlayer = ESX.PlayerData
-  local bankAccount = xPlayer.getAccount('bank')
-  if (amount > bankAccount.money) then
-    cb(json.encode({ error = true, message = 'Saldo insuficiente!' }))
-  else
-    xPlayer.removeAccountMoney('bank', amount)
-    xPlayer.addAccountMoney('money', amount)
-    local response = {
-      error = nil,
-      message = string.format('Retirada efetuada com sucesso!')
-    }
+  ESX.TriggerServerCallback('kmk_bank:withdrawMoney', function(response)
+    cb(json.encode({ error = response.error, message = _U(response.message), balance = response.balance,
+      response = response }))
+  end, data)
+  -- local amount = data.amount
+  -- local xPlayer = ESX.PlayerData
+  -- local bankAccount = xPlayer.getAccount('bank')
+  -- if (amount > bankAccount.money) then
+  --   cb(json.encode({ error = true, message = 'Saldo insuficiente!' }))
+  -- else
+  --   xPlayer.removeAccountMoney('bank', amount)
+  --   xPlayer.addAccountMoney('money', amount)
+  --   local response = {
+  --     error = nil,
+  --     message = string.format('Retirada efetuada com sucesso!')
+  --   }
 
-    cb(json.encode(response))
-  end
+  --   cb(json.encode(response))
+  -- end
 end
 function Endpoint.makeDeposit(data, cb)
   local amount = data.amount
@@ -79,6 +86,14 @@ RegisterNUICallback('withdrawMoney', Endpoint.withdrawMoney)
 RegisterNUICallback('makeDeposit', Endpoint.makeDeposit)
 RegisterNUICallback('getTransferTargets', Endpoint.getTransferTargets)
 function Manage.getBalance(args, cb)
+  if (args == nil and cb == nil) then
+    print(
+      '^3missing callback^7\n\nUsage:\ngetBalance(* function)\nor\ngetBalance({target = \'self\'})\nor\ngetBalance({target = \'society\', society = \'name\'})')
+    return nil
+  end
+  if (cb == nil and type(args) == "function") then
+    cb = args
+  end
   if (not args or not args.target or args.target == 'self') then
     local xPlayer = ESX.GetPlayerData()
     ESX.TriggerServerCallback('kmk_bank:getPlayerBalance', function(amount)
@@ -147,4 +162,8 @@ RegisterNUICallback('makeTransfer', function(data, cb)
       }))
     end)
   end
+end)
+
+AddEventHandler('CEventPlayerDeath', function()
+  SendNuiMessage(json.encode({ type = 'playerDied' }))
 end)
