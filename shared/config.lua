@@ -1,7 +1,7 @@
 Config = {}
 Config.Locale = GetConvar('esx:locale', 'en')
 Config.debug = {
-  uiVisible = true
+  uiVisible = false
 }
 Config.InteractKeyMap = {
   keyboard = {
