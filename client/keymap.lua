@@ -3,8 +3,7 @@ local OPEN_ATM_COMMAND = '_kmk_bank:OpenAtTM'
 
 local function openATM()
   local xPlayer = ESX.GetPlayerData()
-  if(not ATM.canInteract)then
-    print('not close to any ATM')
+  if (not ATM.canInteract) then
     return
   end
   Manage.getBalance(nil, function(balance)
