@@ -21,6 +21,7 @@ server_scripts {
 
 
 files {
+  'imports.lua',
   'web/**.*'
 }
 
