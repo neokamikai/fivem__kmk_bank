@@ -20,6 +20,12 @@ function BankAccount.Player.withdraw(source, amount)
   xPlayer.addMoney(amount)
   return xPlayer.getAccount('bank').money
 end
+function BankAccount.Player.makeDeposit(source, amount)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  xPlayer.removeMoney(amount)
+  xPlayer.addAccountMoney('bank', amount)
+  return xPlayer.getAccount('bank').money
+end
 
 function BankAccount.Player.getBalance(source)
   local xPlayer = ESX.GetPlayerFromId(source)
@@ -51,6 +57,16 @@ ESX.RegisterServerCallback('kmk_bank:withdrawMoney', function(source, cb, data)
   local updatedBalance = BankAccount.Player.withdraw(source, data.amount)
   -- print(string.format("%s is trying to withdraw %s from bank", xPlayer.getName(), data.amount))
   cb({ error = nil, message = 'withdrawMoneySuccessful', balance = updatedBalance })
+end)
+ESX.RegisterServerCallback('kmk_bank:makeDeposit', function(source, cb, data)
+  local xPlayer = ESX.GetPlayerFromId(source)
+  if (xPlayer.getMoney() < data.amount) then
+    cb({ error = true, message = 'depositMoneyFailCannotAfford' })
+  else
+    local updatedBalance = BankAccount.Player.makeDeposit(source, data.amount)
+    -- print(string.format("%s is trying to withdraw %s from bank", xPlayer.getName(), data.amount))
+    cb({ error = nil, message = 'depositMoneySuccessful', balance = updatedBalance })
+  end
 end)
 ESX.RegisterServerCallback('kmk_bank:getTransferTargets', function(source, cb)
   if (transferTargets[source]) then

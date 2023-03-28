@@ -58,20 +58,28 @@ function Endpoint.withdrawMoney(data, cb)
   -- end
 end
 function Endpoint.makeDeposit(data, cb)
-  local amount = data.amount
-  local xPlayer = ESX.PlayerData
-  local moneyAccount = xPlayer.getAccount('money')
-  if (amount > moneyAccount.money) then
-    cb(json.encode({ error = true, message = 'Você não possui todo esse dinheiro!' }))
-  else
-    xPlayer.removeAccountMoney('money', amount)
-    xPlayer.addAccountMoney('bank', amount)
-    local response = {
-      error = nil,
-      message = ''
-    }
-    cb(json.encode(response))
-  end
+  ESX.TriggerServerCallback('kmk_bank:makeDeposit', function(response)
+    cb(json.encode({
+      error = response.error,
+      message = _U(response.message),
+      balance = response.balance,
+      response = response
+    }))
+  end, data)
+  -- local amount = data.amount
+  -- local xPlayer = ESX.PlayerData
+  -- local moneyAccount = xPlayer.getAccount('money')
+  -- if (amount > moneyAccount.money) then
+  --   cb(json.encode({ error = true, message = 'Você não possui todo esse dinheiro!' }))
+  -- else
+  --   xPlayer.removeAccountMoney('money', amount)
+  --   xPlayer.addAccountMoney('bank', amount)
+  --   local response = {
+  --     error = nil,
+  --     message = ''
+  --   }
+  --   cb(json.encode(response))
+  -- end
 end
 function Endpoint.getTransferTargets(data, cb)
   local xPlayer = ESX.GetPlayerData()

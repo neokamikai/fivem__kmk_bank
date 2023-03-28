@@ -88,7 +88,7 @@ app.controller('MainController', ['$scope', function MainController(scope) {
     try {
       if (typeof resp == 'string') output = JSON.parse(resp)
     } catch (error) {
-      console.error(error)
+      console.error(error, resp)
     }
     if (resp.response) output = output.response
     return output;
@@ -310,6 +310,9 @@ app.controller('MainController', ['$scope', function MainController(scope) {
             icon: resp.error && 'error' || 'success',
             text: resp.message
           });
+          if (typeof resp.balance == 'number') {
+            ctrl.atm.accountInfo.balance = resp.balance;
+          }
           ctrl.atm.goBack();
           scope.$apply();
         });
