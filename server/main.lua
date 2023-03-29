@@ -45,6 +45,9 @@ function BankAccount.Player.transferToPlayer(source, target, amount)
   xPlayerTarget.addAccountMoney('bank', amount)
   return xPlayer.getAccount('bank').money
 end
+local function GetSociety(societyName, cb)
+
+end
 -- Gets player job society money
 -- ESX.TriggerServerCallback('esx_society:getSocietyMoney', function(money)
 --
@@ -77,7 +80,7 @@ ESX.RegisterServerCallback('kmk_bank:getTransferTargets', function(source, cb)
   MySQL.query('SELECT * FROM bank_transfer_targets WHERE identifier = @playerId ORDER BY job_grade DESC', {
     ['@playerId'] = source
   }, function(results)
-    local transferTargets = {}
+    local transferTargetsList = {}
     for i = 1, #results, 1 do
       local entry = results[i]
       local name = entry.target_name
@@ -94,8 +97,7 @@ ESX.RegisterServerCallback('kmk_bank:getTransferTargets', function(source, cb)
           target.name = xTargetPlayer.name
         end
       end
-
-      table.insert(transferTargets, {
+      table.insert(transferTargetsList, {
         id = entry.id,
         name = name,
         type = entry.target_type,
@@ -103,7 +105,7 @@ ESX.RegisterServerCallback('kmk_bank:getTransferTargets', function(source, cb)
       })
     end
     transferTargets[source] = {
-      transferTargets = results
+      transferTargets = transferTargetsList
     }
     cb(transferTargets[source])
   end)
