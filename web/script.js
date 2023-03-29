@@ -86,7 +86,7 @@ app.controller('MainController', ['$scope', function MainController(scope) {
   }).then(resp => resp.json()).then(resp => {
     let output = resp;
     try {
-      if (typeof resp == 'string') output = JSON.parse(resp)
+      if (typeof resp == 'string' && resp.trim().length > 0) output = JSON.parse(resp)
     } catch (error) {
       console.error(error, resp)
     }
