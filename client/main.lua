@@ -83,7 +83,7 @@ function Endpoint.makeDeposit(data, cb)
 end
 function Endpoint.getTransferTargets(data, cb)
   local xPlayer = ESX.GetPlayerData()
-  ESX.TriggerServerCallback('callbackName', function(response)
+  ESX.TriggerServerCallback('kmk_bank.getTransferTargets', function(response)
     cb(json.encode(response))
   end, xPlayer.identifier, data)
 end
@@ -173,5 +173,6 @@ RegisterNUICallback('makeTransfer', function(data, cb)
 end)
 
 AddEventHandler('CEventPlayerDeath', function()
+  print('oops player died!')
   SendNuiMessage(json.encode({ type = 'playerDied' }))
 end)
